@@ -1,3 +1,3 @@
-export default function HeaderServer() {
+export default async function HeaderServer() {
   return <div>Header Server</div>;
 }

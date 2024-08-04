@@ -5,7 +5,9 @@ import {
   CategoriesResponse,
   Category,
   Page,
+  PageInfo,
   PagesResponse,
+  Post,
   PostsResponse,
   Tag,
   TagsResponse,
@@ -18,12 +20,18 @@ const client = new GraphQLClient(endpoint);
 // Define your queries
 
 const GET_POSTS = gql`
-  query GetPosts {
-    posts(first: 25) {
+  query GetPosts($first: Int, $after: String) {
+    posts(first: $first, after: $after) {
       nodes {
+        id
         title
         slug
-        content
+        date
+        excerpt
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
@@ -34,14 +42,14 @@ const GET_POST_BY_SLUG = gql`
     post(id: $slug, idType: SLUG) {
       slug
       title
-      content
+      content(format: RENDERED)
     }
   }
 `;
 
 const GET_PAGES = gql`
   query GetPages {
-    pages {
+    pages(first: 3) {
       nodes {
         slug
         title
@@ -55,7 +63,7 @@ const GET_PAGE_BY_SLUG = gql`
     page(id: $slug, idType: URI) {
       slug
       title
-      content
+      content(format: RENDERED)
     }
   }
 `;
@@ -116,9 +124,26 @@ const GET_ALL_TAGS = gql`
 `;
 
 // Define your fetch functions
-export async function getPosts(): Promise<Page[]> {
-  const data = await client.request<PostsResponse>(GET_POSTS);
-  return data.posts.nodes;
+export async function getPosts(
+  first: number = 10,
+  after: string | null = null,
+): Promise<{
+  posts: Post[];
+  pageInfo: PageInfo;
+}> {
+  try {
+    const data = await client.request<PostsResponse>(GET_POSTS, {
+      first,
+      after,
+    });
+    return {
+      posts: data.posts.nodes,
+      pageInfo: data.posts.pageInfo,
+    };
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    return { posts: [], pageInfo: { hasNextPage: false, endCursor: null } };
+  }
 }
 
 export async function getPostBySlug(slug: string): Promise<Page | null> {
@@ -183,3 +208,29 @@ export async function getAllTags(): Promise<Tag[]> {
     return [];
   }
 }
+
+// type WPGraphQLParams = {
+//   query: string;
+//   variables?: object;
+// };
+//
+// export async function wpQuery({ query, variables = {} }: WPGraphQLParams) {
+//   const res = await fetch(endpoint, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       query,
+//       variables,
+//     }),
+//   });
+//
+//   if (!res.ok) {
+//     console.error(res);
+//     return {};
+//   }
+//
+//   const { data } = await res.json();
+//   return data;
+// }

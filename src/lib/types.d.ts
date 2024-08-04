@@ -1,3 +1,14 @@
+export type Post = Page & {
+  id?: string;
+  date?: string;
+  excerpt: string;
+};
+
+export type PageInfo = {
+  hasNextPage: boolean;
+  endCursor: string | null;
+};
+
 export type Page = {
   slug?: string;
   title: string;
@@ -12,12 +23,6 @@ export type Category = {
   description: string;
   count: number;
   parentId: string | null;
-};
-
-type CategoriesResponse = {
-  categories: {
-    nodes: Category[];
-  };
 };
 
 export type Author = {
@@ -43,6 +48,12 @@ export type Tag = {
   count: number;
 };
 
+type CategoriesResponse = {
+  categories: {
+    nodes: Category[];
+  };
+};
+
 export type TagsResponse = {
   tags: {
     nodes: Tag[];
@@ -57,7 +68,9 @@ export type AuthorsResponse = {
 
 export type PostsResponse = {
   posts: {
-    nodes: Page[];
+    nodes: Post[];
+    pageInfo: PageInfo;
+    totalCount: number;
   };
 };
 
